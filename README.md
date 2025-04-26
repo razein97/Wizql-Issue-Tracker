@@ -1,2 +1,2 @@
-# Database-Magic
-Database Magic Issue Tracker
+# Wizql
+Wizql Issue Tracker
