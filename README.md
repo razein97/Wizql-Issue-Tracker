@@ -1,2 +1,2 @@
-# Wizql
+# wizQl
 Wizql Issue Tracker
