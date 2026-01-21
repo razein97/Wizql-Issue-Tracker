@@ -1,0 +1,91 @@
+{
+	"version": "0.0.1",
+	"notes": "Support packages for WizQl",
+	"pub_date": "",
+	"platforms": {
+		"darwin-aarch64": {
+			"mongodb": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mongodb_0.0.1_aarch64_darwin.zip",
+				"checksum": "8363f013e782b10466b6f1c516f1f41e4a60ba519a588435a72abb87919af4f5"
+			},
+			"postgresql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/postgresql_0.0.1_aarch64_darwin.zip",
+				"checksum": "7db2247973b2c964174a90a9e197082ad9afb26ad2307d96d518caa608d52f5b"
+			},
+			"mysql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mysql_0.0.1_aarch64_darwin.zip",
+				"checksum": "94dcf8c55bf1a7af52b51ae328354c02b722a931018d1a89912bec3118f36c68"
+			}
+		},
+		"darwin-x86_64": {
+			"mongodb": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mongodb_0.0.1_x86_64_darwin.zip",
+				"checksum": "95e035609728d560de871e7ca7a9e9fa302d5a77a33e9e728b6a672132936b7a"
+			},
+			"postgresql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/postgresql_0.0.1_x86_64_darwin.zip",
+				"checksum": "fca7b5860024c6639880ec8d885d24f6adaa1b1925ce55021fb739e368b055fa"
+			},
+			"mysql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mysql_0.0.1_x86_64_darwin.zip",
+				"checksum": "4fabece5275819e10e883fb609134cf7969e73c280868776a04fc62d11414291"
+			}
+		},
+		"windows-aarch64": {
+			"mongodb": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mongodb_0.0.1_aarch64_windows.zip",
+				"checksum": "a5a79fb23ca41e261354478583ecadc7473687842c45876e5018b70bd04c20cb"
+			},
+			"postgresql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/postgresql_0.0.1_aarch64_windows.zip",
+				"checksum": "eec49c3a58995c9c01ed1f5dbb9aad5a6ef9890db725b123f35c5cc4ba951080"
+			},
+			"mysql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mysql_0.0.1_aarch64_windows.zip",
+				"checksum": "d10ec1ca5db3dcea247d2f4ed2db42a388500a6f81f220541d034f334d348fd5"
+			}
+		},
+		"windows-x86_64": {
+			"mongodb": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mongodb_0.0.1_x86_64_windows.zip",
+				"checksum": "63cc208e5add3b09dd766a1a0bea102e20b02e1a57cd95e4f43f805bbcd3cca9"
+			},
+			"postgresql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/postgresql_0.0.1_x86_64_windows.zip",
+				"checksum": "c5a9e8c34d96c53b5275a0457b910d24654f39a450af4c7854ceb87c66458eda"
+			},
+			"mysql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mysql_0.0.1_x86_64_windows.zip",
+				"checksum": "91317d3de0da1c3014b76852decb821cae8c2e0814317b035ae26894937bfbcb"
+			}
+		},
+		"linux-aarch64": {
+			"mongodb": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mongodb_0.0.1_aarch64_linux.zip",
+				"checksum": "6ac5cc39e7b8a7228a6c6bcdca9bdeab7a5ced06de3e0cb63269850b98a08e19"
+			},
+			"postgresql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/postgresql_0.0.1_aarch64_linux.zip",
+				"checksum": "86553c593a0df3dd26b90bca30d05f11dc0ef2dbb91e08c06d6dcf4796cf1916"
+			},
+			"mysql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mysql_0.0.1_aarch64_linux.zip",
+				"checksum": "5cea6baa3e503d6bab5b62dadde0b8797c842a3cd7f8d22adbc018c87801065f"
+			}
+		},
+		"linux-x86_64": {
+			"mongodb": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mongodb_0.0.1_x86_64_linux.zip",
+				"checksum": "b6ded480043eb26a1b0bb24d23e010f3c7d34ecd692d51b6c8337996e2f8836d"
+			},
+			"postgresql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/postgresql_0.0.1_x86_64_linux.zip",
+				"checksum": "c78f5069c5421276809e6b30d0947f230d329d64498437b40b0c52a79c8d1d26"
+			},
+			"mysql": {
+				"url": "https://github.com/razein97/Wizql-Issue-Tracker/releases/download/wizql-support-0.0.1/mysql_0.0.1_x86_64_linux.zip",
+				"checksum": "2b18f3bc88a6b8f471c0de86fd6f0f8ede81d19eac3fd465537df7b81a617533"
+			}
+		}
+	}
+}
