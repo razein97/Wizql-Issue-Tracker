@@ -1,0 +1,104 @@
+From 7aee1c09f87507cb057d3926a55aeae3082e5eff Mon Sep 17 00:00:00 2001
+From: Anthony Roberts <anthony.roberts@linaro.org>
+Date: Mon, 13 Jun 2022 13:54:29 +0100
+Subject: [PATCH 1/5] Add secondary method of checking libevent version
+
+This commit adds a secondary method of checking the given libevent
+version, in the event of an MSVC ARM64 compilation.
+---
+ cmake/libevent.cmake | 78 +++++++++++++++++++++++++++-----------------
+ 1 file changed, 48 insertions(+), 30 deletions(-)
+
+diff --git a/cmake/libevent.cmake b/cmake/libevent.cmake
+index d9e3cb3b32e..37165bbd0c1 100644
+--- a/cmake/libevent.cmake
++++ b/cmake/libevent.cmake
+@@ -29,37 +29,55 @@
+ SET(MIN_LIBEVENT_VERSION_REQUIRED "2.1")
+ 
+ MACRO(FIND_LIBEVENT_VERSION)
+-  SET(TEST_SRC
+-    "#include <event.h>
+-     #include <stdio.h>
+-    int main()
+-    {
+-      fprintf(stdout, \"%s\", LIBEVENT_VERSION);
+-    }
+-    "
+-    )
+-  FILE(WRITE
+-    "${CMAKE_BINARY_DIR}/find_libevent_version.c"
+-    "${TEST_SRC}"
+-    )
+-  TRY_RUN(TEST_RUN_RESULT COMPILE_TEST_RESULT
+-    ${CMAKE_BINARY_DIR}
+-    "${CMAKE_BINARY_DIR}/find_libevent_version.c"
+-    CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${LIBEVENT_INCLUDE_DIRS}"
+-    COMPILE_OUTPUT_VARIABLE OUTPUT
+-    RUN_OUTPUT_VARIABLE RUN_OUTPUT
+-    )
+-  # MESSAGE(STATUS "TRY_EVENT TEST_RUN_RESULT is ${TEST_RUN_RESULT}")
+-  # MESSAGE(STATUS "TRY_EVENT COMPILE_TEST_RESULT is ${COMPILE_TEST_RESULT}")
+-  # MESSAGE(STATUS "TRY_EVENT COMPILE_OUTPUT_VARIABLE is ${OUTPUT}")
+-  # MESSAGE(STATUS "TRY_EVENT RUN_OUTPUT_VARIABLE is ${RUN_OUTPUT}")
+-
+-  IF(COMPILE_TEST_RESULT)
+-    SET(LIBEVENT_VERSION_STRING "${RUN_OUTPUT}")
+-    STRING(REGEX REPLACE
+-      "([.-0-9]+).*" "\\1" LIBEVENT_VERSION "${LIBEVENT_VERSION_STRING}")
++  IF((NOT MSVC) OR (NOT CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64"))
++    SET(TEST_SRC
++      "#include <event.h>
++       #include <stdio.h>
++      int main()
++      {
++        fprintf(stdout, \"%s\", LIBEVENT_VERSION);
++      }
++      "
++      )
++    FILE(WRITE
++      "${CMAKE_BINARY_DIR}/find_libevent_version.c"
++      "${TEST_SRC}"
++      )
++    TRY_RUN(TEST_RUN_RESULT COMPILE_TEST_RESULT
++      ${CMAKE_BINARY_DIR}
++      "${CMAKE_BINARY_DIR}/find_libevent_version.c"
++      CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${LIBEVENT_INCLUDE_DIRS}"
++      COMPILE_OUTPUT_VARIABLE OUTPUT
++      RUN_OUTPUT_VARIABLE RUN_OUTPUT
++      )
++    # MESSAGE(STATUS "TRY_EVENT TEST_RUN_RESULT is ${TEST_RUN_RESULT}")
++    # MESSAGE(STATUS "TRY_EVENT COMPILE_TEST_RESULT is ${COMPILE_TEST_RESULT}")
++    # MESSAGE(STATUS "TRY_EVENT COMPILE_OUTPUT_VARIABLE is ${OUTPUT}")
++    # MESSAGE(STATUS "TRY_EVENT RUN_OUTPUT_VARIABLE is ${RUN_OUTPUT}")
++
++    IF(COMPILE_TEST_RESULT)
++      SET(LIBEVENT_VERSION_STRING "${RUN_OUTPUT}")
++      STRING(REGEX REPLACE
++        "([.-0-9]+).*" "\\1" LIBEVENT_VERSION "${LIBEVENT_VERSION_STRING}")
++    ELSE()
++      MESSAGE(WARNING "Could not determine LIBEVENT_VERSION")
++    ENDIF()
+   ELSE()
+-    MESSAGE(WARNING "Could not determine LIBEVENT_VERSION")
++    IF(WITH_LIBEVENT STREQUAL "bundled")
++      SET(LIBEVENT_VERSION_PATH "${CMAKE_BINARY_DIR}/${LIBEVENT_BUNDLE_PATH}/include/event2/event-config.h")
++    ELSE()
++      SET(LIBEVENT_VERSION_PATH "${LIBEVENT_INCLUDE_DIRECTORY}/event2/event-config.h")
++    ENDIF()
++
++    FILE(STRINGS "${LIBEVENT_VERSION_PATH}"
++      LIBEVENT_VERSION_STRING
++      REGEX "^#[ ]*define[\t ]+EVENT__PACKAGE_VERSION[\t ]+\".*\"$"
++      )
++
++    STRING(REGEX REPLACE
++        "^.*EVENT__PACKAGE_VERSION[\t ]+\"([0-9]+\\.[0-9]+\\.[0-9]+)\"$" "\\1"
++        LIBEVENT_VERSION "${LIBEVENT_VERSION_STRING}"
++        )
+   ENDIF()
+ 
+   MESSAGE(STATUS "LIBEVENT_VERSION (${WITH_LIBEVENT}) ${LIBEVENT_VERSION}")
+-- 
+2.35.1.windows.2
+

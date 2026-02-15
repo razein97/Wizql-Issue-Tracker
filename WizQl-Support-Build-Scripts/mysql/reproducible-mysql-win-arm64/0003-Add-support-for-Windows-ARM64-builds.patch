@@ -1,0 +1,405 @@
+From 00e611ba6811f1e4dbcd49950aa28a577b084971 Mon Sep 17 00:00:00 2001
+From: Anthony Roberts <anthony.roberts@linaro.org>
+Date: Wed, 29 Jun 2022 15:35:35 +0100
+Subject: [PATCH 3/5] Add support for Windows ARM64 builds
+
+This commit adds initial support for building for an ARM64 target on
+windows, using the MSVC compiler.
+---
+ cmake/os/Windows.cmake                        |  11 +-
+ cmake/package_name.cmake                      |   6 +-
+ cmake/ssl.cmake                               |   6 +-
+ .../cpp_int/intel_intrinsics.hpp              | 127 ++++++++++++++++++
+ include/my_rdtsc.h                            |   1 +
+ mysys/my_rdtsc.cc                             |   8 ++
+ storage/innobase/include/os0atomic.h          |   2 +-
+ storage/innobase/include/ut0crc32.h           |  15 ++-
+ storage/innobase/ut/crc32.cc                  |  34 ++++-
+ 9 files changed, 201 insertions(+), 9 deletions(-)
+ create mode 100644 include/boost_1_77_0/patches/boost/multiprecision/cpp_int/intel_intrinsics.hpp
+
+diff --git a/cmake/os/Windows.cmake b/cmake/os/Windows.cmake
+index b76e6db7f74..e53f1ad5aba 100644
+--- a/cmake/os/Windows.cmake
++++ b/cmake/os/Windows.cmake
+@@ -39,6 +39,10 @@ IF(MY_COMPILER_IS_CLANG)
+   ADD_DEFINITIONS(-DWIN32_CLANG)
+ ENDIF()
+ 
++IF(CMAKE_GENERATOR_PLATFORM STREQUAL "ARM64")
++  SET(WIN_ARM64 1)
++ENDIF()
++
+ # avoid running system checks by using pre-cached check results
+ # system checks are expensive on VS since every tiny program is to be compiled
+ # in a VC solution.
+@@ -58,7 +62,12 @@ ENDIF()
+ # Used by the test suite to ignore bugs on some platforms,
+ IF(CMAKE_SIZEOF_VOID_P MATCHES 8)
+   SET(SYSTEM_TYPE "Win64")
+-  SET(MYSQL_MACHINE_TYPE "x86_64")
++  IF(WIN_ARM64)
++    SET(MYSQL_MACHINE_TYPE "arm64")
++  ELSE()
++    SET(MYSQL_MACHINE_TYPE "x86_64")
++  ENDIF()
++  
+ ELSE()
+   IF(WITHOUT_SERVER)
+     MESSAGE(WARNING "32bit is experimental!!")
+diff --git a/cmake/package_name.cmake b/cmake/package_name.cmake
+index 7983475221c..7eb40f3e2b6 100644
+--- a/cmake/package_name.cmake
++++ b/cmake/package_name.cmake
+@@ -40,7 +40,11 @@ MACRO(GET_PACKAGE_FILE_NAME Var)
+       SET(NEED_DASH_BETWEEN_PLATFORM_AND_MACHINE 0)
+       SET(DEFAULT_PLATFORM "win")
+       IF(64BIT)
+-        SET(DEFAULT_MACHINE "x64")
++        IF(WIN_ARM64)
++          SET(DEFAULT_MACHINE "arm64")
++        ELSE()
++          SET(DEFAULT_MACHINE "x64")
++        ENDIF()
+       ELSE()
+         SET(DEFAULT_MACHINE "32")
+       ENDIF()
+diff --git a/cmake/ssl.cmake b/cmake/ssl.cmake
+index aa2e4521268..adb264e70f8 100644
+--- a/cmake/ssl.cmake
++++ b/cmake/ssl.cmake
+@@ -548,7 +548,11 @@ MACRO(MYSQL_CHECK_SSL_DLLS)
+       SET(SSL_MSVC_ARCH_SUFFIX)
+       IF(OPENSSL_MINOR_VERSION VERSION_EQUAL 1)
+         SET(SSL_MSVC_VERSION_SUFFIX "-1_1")
+-        SET(SSL_MSVC_ARCH_SUFFIX "-x64")
++        IF(WIN_ARM64)
++          SET(SSL_MSVC_ARCH_SUFFIX "-arm64")
++        ELSE()
++          SET(SSL_MSVC_ARCH_SUFFIX "-x64")
++        ENDIF()
+       ENDIF()
+ 
+       # OpenSSL 1.1 Look for libcrypto-1_1-x64.dll or libcrypto-1_1.dll
+diff --git a/include/boost_1_77_0/patches/boost/multiprecision/cpp_int/intel_intrinsics.hpp b/include/boost_1_77_0/patches/boost/multiprecision/cpp_int/intel_intrinsics.hpp
+new file mode 100644
+index 00000000000..0dd6d80dd54
+--- /dev/null
++++ b/include/boost_1_77_0/patches/boost/multiprecision/cpp_int/intel_intrinsics.hpp
+@@ -0,0 +1,127 @@
++///////////////////////////////////////////////////////////////
++//  Copyright 2020 Madhur Chauhan.
++//  Copyright 2020 John Maddock. 
++//  Distributed under the Boost
++//  Software License, Version 1.0. (See accompanying file
++//  LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt
++
++#ifndef BOOST_MP_INTEL_INTRINSICS_HPP
++#define BOOST_MP_INTEL_INTRINSICS_HPP
++//
++// Select which actual implementation header to use:
++//
++#ifdef __has_include
++#if __has_include(<immintrin.h>)
++#define BOOST_MP_HAS_IMMINTRIN_H
++#endif
++#endif
++//
++// If this is GCC/clang, then check that the actual intrinsic exists:
++//
++#if defined(__has_builtin) && defined(__GNUC__)
++#if !__has_builtin(__builtin_ia32_addcarryx_u64) && defined(BOOST_MP_HAS_IMMINTRIN_H) && !(defined(BOOST_GCC) && (__GNUC__ >= 9))
++#undef BOOST_MP_HAS_IMMINTRIN_H
++#endif
++#elif defined(BOOST_MP_HAS_IMMINTRIN_H) && defined(__GNUC__) && !(defined(BOOST_GCC) && (__GNUC__ >= 9))
++#undef BOOST_MP_HAS_IMMINTRIN_H
++#endif
++
++#if defined(__clang__) && (__clang__ < 9)
++// We appear to crash the compiler if we try to use these intrinsics?
++#undef BOOST_MP_HAS_IMMINTRIN_H
++#endif
++
++#if defined(BOOST_MSVC) && !defined(_M_IX86) && !defined(_M_X64) && !defined(_M_AMD64)
++//
++// When targeting platforms such as ARM, msvc still has the Intel headers in it's include path
++// even though they're not usable.  See https://github.com/boostorg/multiprecision/issues/321
++//
++#undef BOOST_MP_HAS_IMMINTRIN_H
++#endif
++
++
++//
++// If the compiler supports the intrinsics used by GCC internally
++// inside <immintrin.h> then we'll use them directly.
++// This is a bit of defensive programming, mostly for a modern clang
++// sitting on top of an older GCC header install.
++//
++#if defined(__has_builtin) && !defined(BOOST_INTEL)
++
++# if __has_builtin(__builtin_ia32_addcarryx_u64)
++#  define BOOST_MP_ADDC __builtin_ia32_addcarryx_u
++# endif
++
++# if __has_builtin(__builtin_ia32_subborrow_u64)
++#  define BOOST_MP_SUBB __builtin_ia32_subborrow_u
++# elif __has_builtin(__builtin_ia32_sbb_u64)
++#  define BOOST_MP_SUBB __builtin_ia32_sbb_u
++# endif
++
++#endif
++
++#ifndef BOOST_MP_ADDC
++#define BOOST_MP_ADDC _addcarry_u
++#endif
++#ifndef BOOST_MP_SUBB
++#define BOOST_MP_SUBB _subborrow_u
++#endif
++
++#ifdef BOOST_MP_HAS_IMMINTRIN_H
++
++#ifdef BOOST_MSVC
++//
++// This is a subset of the full <immintrin.h> :
++//
++#include <intrin.h>
++#else
++#include <immintrin.h>
++#endif
++
++#if defined(BOOST_HAS_INT128)
++
++namespace boost { namespace multiprecision { namespace detail {
++
++BOOST_MP_FORCEINLINE unsigned char addcarry_limb(unsigned char carry, limb_type a, limb_type b, limb_type* p_result)
++{
++#ifdef BOOST_INTEL
++   using cast_type = unsigned __int64;
++#else
++   using cast_type = unsigned long long;
++#endif
++   return BOOST_JOIN(BOOST_MP_ADDC, 64)(carry, a, b, reinterpret_cast<cast_type*>(p_result));
++}
++
++BOOST_MP_FORCEINLINE unsigned char subborrow_limb(unsigned char carry, limb_type a, limb_type b, limb_type* p_result)
++{
++#ifdef BOOST_INTEL
++   using cast_type = unsigned __int64;
++#else
++   using cast_type = unsigned long long;
++#endif
++   return BOOST_JOIN(BOOST_MP_SUBB, 64)(carry, a, b, reinterpret_cast<cast_type*>(p_result));
++}
++
++}}} // namespace boost::multiprecision::detail
++
++#else
++
++namespace boost { namespace multiprecision { namespace detail {
++
++BOOST_MP_FORCEINLINE unsigned char addcarry_limb(unsigned char carry, limb_type a, limb_type b, limb_type* p_result)
++{
++   return BOOST_JOIN(BOOST_MP_ADDC, 32)(carry, a, b, reinterpret_cast<unsigned int*>(p_result));
++}
++
++BOOST_MP_FORCEINLINE unsigned char subborrow_limb(unsigned char carry, limb_type a, limb_type b, limb_type* p_result)
++{
++   return BOOST_JOIN(BOOST_MP_SUBB, 32)(carry, a, b, reinterpret_cast<unsigned int*>(p_result));
++}
++
++}}} // namespace boost::multiprecision::detail
++
++#endif
++
++#endif
++
++#endif
+diff --git a/include/my_rdtsc.h b/include/my_rdtsc.h
+index 6e378e94e5b..b01a996b0cb 100644
+--- a/include/my_rdtsc.h
++++ b/include/my_rdtsc.h
+@@ -137,5 +137,6 @@ void my_timer_init(MY_TIMER_INFO *mti);
+ /* #define MY_TIMER_ROUTINE_ASM_SUNPRO_X86_64       27  - No longer used */
+ #define MY_TIMER_ROUTINE_ASM_AARCH64 28
+ #define MY_TIMER_ROUTINE_GET_THREAD_TIMES 29
++#define MY_TIMER_ROUTINE_INTRIN_MSVC_AARCH64 30
+ 
+ #endif
+diff --git a/mysys/my_rdtsc.cc b/mysys/my_rdtsc.cc
+index 3869db572e6..09478ed6577 100644
+--- a/mysys/my_rdtsc.cc
++++ b/mysys/my_rdtsc.cc
+@@ -172,6 +172,12 @@ ulonglong my_timer_cycles(void) {
+ #elif defined(HAVE_SYS_TIMES_H) && defined(HAVE_GETHRTIME)
+   /* gethrtime may appear as either cycle or nanosecond counter */
+   return (ulonglong)gethrtime();
++#elif defined(_M_ARM64)
++  /* MSVC doesn't allow the use of __asm for ARM64, so we use the intrinsic. */
++  /* This is equivalent to the aarch64 code above, just MSVC-friendly */
++  ulonglong result;
++  result = _ReadStatusReg(ARM64_CNTVCT);
++  return result;
+ #else
+   return 0;
+ #endif
+@@ -493,6 +499,8 @@ void my_timer_init(MY_TIMER_INFO *mti) {
+   mti->cycles.routine = MY_TIMER_ROUTINE_ASM_AARCH64;
+ #elif defined(HAVE_SYS_TIMES_H) && defined(HAVE_GETHRTIME)
+   mti->cycles.routine = MY_TIMER_ROUTINE_GETHRTIME;
++#elif defined(_M_ARM64)
++  mti->cycles.routine = MY_TIMER_ROUTINE_INTRIN_MSVC_AARCH64;
+ #else
+   mti->cycles.routine = 0;
+ #endif
+diff --git a/storage/innobase/include/os0atomic.h b/storage/innobase/include/os0atomic.h
+index 7061676eef0..40ebbe64ff3 100644
+--- a/storage/innobase/include/os0atomic.h
++++ b/storage/innobase/include/os0atomic.h
+@@ -64,7 +64,7 @@ this program; if not, write to the Free Software Foundation, Inc.,
+ #define IB_MEMORY_BARRIER_STARTUP_MSG \
+   "Solaris memory ordering functions are used for memory barrier"
+ 
+-#elif defined(HAVE_WINDOWS_MM_FENCE) && defined(_WIN64)
++#elif defined(HAVE_WINDOWS_MM_FENCE) && (defined(_WIN64) && !defined(_M_ARM64))
+ #define HAVE_MEMORY_BARRIER
+ #include <mmintrin.h>
+ #define os_rmb _mm_lfence()
+diff --git a/storage/innobase/include/ut0crc32.h b/storage/innobase/include/ut0crc32.h
+index b289ac28432..966e2cd8cdd 100644
+--- a/storage/innobase/include/ut0crc32.h
++++ b/storage/innobase/include/ut0crc32.h
+@@ -49,23 +49,25 @@ this program; if not, write to the Free Software Foundation, Inc.,
+   - do you need the variant with swapped byte order?
+ */
+ 
+-#if defined(__GNUC__) && defined(__x86_64__) || defined(_WIN32)
++#if defined(__GNUC__) && defined(__x86_64__) || (defined(_WIN32) && !defined(_M_ARM64))
+ #define CRC32_x86_64
+ #ifdef _WIN32
+ #define CRC32_x86_64_WIN
+ #else /* _WIN32 */
+ #define CRC32_x86_64_DEFAULT
+ #endif /* _WIN32 */
+-#elif defined(__aarch64__) && defined(__GNUC__)
++#elif defined(_M_ARM64) || defined(__aarch64__) && defined(__GNUC__)
+ #define CRC32_ARM64
+ #ifdef APPLE_ARM
+ #define CRC32_ARM64_APPLE
+-#else /* APPLE_ARM */
++#elif defined(_M_ARM64)
++#define CRC32_ARM64_WINDOWS
++#else
+ #define CRC32_ARM64_DEFAULT
+ #endif /* APPLE_ARM */
+ #else
+ #define CRC32_DEFAULT
+-#endif /* defined(__aarch64__) && defined(__GNUC__) */
++#endif /* defined(_M_ARM64) || defined(__aarch64__) && defined(__GNUC__) */
+ 
+ /* At this point we have classified the system statically into exactly one of
+ the possible cases:
+@@ -104,6 +106,11 @@ CRC32_ARM64
+         also expect the __crc32cd and vmull_p64 to "just work" on it, without
+         checking getauxval().
+ 
++    CRC32_ARM64_WINDOWS:
++        An environment which seems to be Windows ARM64. This means that we are
++        required to use the IsProcessorFeaturePresent function to determine if
++        the processor is capable of using the CRC32 NEON intrinsics.
++
+     CRC32_ARM64_DEFAULT
+         An environment which seems to be like a "regular" ARM64. Note that this
+         is not very specific term, as there are ARMv7-A, ARMv8-A, and the later
+diff --git a/storage/innobase/ut/crc32.cc b/storage/innobase/ut/crc32.cc
+index 1a422a80398..92cb48f832d 100644
+--- a/storage/innobase/ut/crc32.cc
++++ b/storage/innobase/ut/crc32.cc
+@@ -105,11 +105,17 @@ external tools. */
+ #include <intrin.h>
+ #endif /* CRC32_x86_64_WIN */
+ 
+-#ifdef CRC32_ARM64
++#if defined(CRC32_ARM64) && !defined(CRC32_ARM64_WINDOWS)
+ #include <arm_acle.h>
+ #include <arm_neon.h>
+ #endif /* CRC32_ARM64 */
+ 
++#ifdef CRC32_ARM64_WINDOWS
++#include <arm64intr.h>
++#include <arm64_neon.h>
++#include <processthreadsapi.h>
++#endif
++
+ #ifdef CRC32_ARM64_DEFAULT
+ #include <asm/hwcap.h>
+ #include <sys/auxv.h>
+@@ -364,6 +370,11 @@ bool can_use_crc32() { return getauxval(AT_HWCAP) & HWCAP_CRC32; }
+ bool can_use_poly_mul() { return getauxval(AT_HWCAP) & HWCAP_PMULL; }
+ #endif /* CRC32_ARM64_DEFAULT */
+ 
++#ifdef CRC32_ARM64_WINDOWS
++bool can_use_crc32() { return IsProcessorFeaturePresent(PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE); }
++bool can_use_poly_mul() { return IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE); }
++#endif
++
+ /** A helper template to statically unroll a loop with a fixed number of
+ iterations, where the iteration number itself is constexpr. So, instead of:
+ 
+@@ -527,19 +538,34 @@ coefficients.
+ @param[in]  w   The polynomial w(x) = sum_{i=0}^{127} { a_i * x^{i} }
+ @return The lowest 64 coefficients, i.e. (result & (1ULL<<i)) == a_i for 0<=i<64
+ */
++#ifndef CRC32_ARM64_WINDOWS
+ static inline uint64_t less_significant_half_of_poly128_t_to_uint64_t(
+     poly128_t w) {
+   /* This should compile down to just a single mov */
+   return vgetq_lane_u64(vreinterpretq_u64_p128(w), 0);
+ }
++#else
++static inline uint64_t less_significant_half_of_poly128_t_to_uint64_t(
++    poly64x2_t w) {
++  /* This should compile down to just a single mov */
++  return vgetq_lane_u64(vreinterpretq_u64_p128(w), 0);
++}
++#endif
+ template <uint32_t w>
+ #ifdef CRC32_ARM64_DEFAULT
+ MY_ATTRIBUTE((target("+crypto")))
+ #endif /* CRC32_ARM64_DEFAULT */
++#ifndef CRC32_ARM64_WINDOWS
+ uint64_t use_pclmul::polynomial_mul_rev(uint32_t rev_u) {
+   constexpr uint64_t flipped_w = flip_at_32(w);
+   return less_significant_half_of_poly128_t_to_uint64_t(vmull_p64(
+       uint64_t_to_poly_64_t(flipped_w), uint64_t_to_poly_64_t(rev_u)));
++#else
++uint64_t use_pclmul::polynomial_mul_rev(uint32_t rev_u) {
++  constexpr uint64_t flipped_w = flip_at_32(w);
++  return less_significant_half_of_poly128_t_to_uint64_t(vmull_p64(
++      vcreate_p64(flipped_w), vcreate_p64(rev_u)));
++#endif
+ }
+ #endif /* CRC32_ARM64 */
+ 
+@@ -776,6 +802,9 @@ MY_ATTRIBUTE((target("sse4.2,pclmul"), flatten))
+ #ifdef CRC32_ARM64_APPLE
+ MY_ATTRIBUTE((flatten))
+ #endif /* CRC32_ARM64_APPLE */
++#ifdef CRC32_ARM64_WINDOWS
++__forceinline
++#endif /* CRC32_ARM64_WINDOWS */
+ #ifdef CRC32_ARM64_DEFAULT
+ MY_ATTRIBUTE((target("+crc+crypto"), flatten))
+ #endif /* CRC32_ARM64_DEFAULT */
+@@ -796,6 +825,9 @@ MY_ATTRIBUTE((target("sse4.2"), flatten))
+ #ifdef CRC32_ARM64_APPLE
+ MY_ATTRIBUTE((flatten))
+ #endif /* CRC32_ARM64_APPLE */
++#ifdef CRC32_ARM64_WINDOWS
++__forceinline
++#endif /* CRC32_ARM64_WINDOWS */
+ #ifdef CRC32_ARM64_DEFAULT
+ MY_ATTRIBUTE((target("+crc"), flatten))
+ #endif /* CRC32_ARM64_DEFAULT */
+-- 
+2.35.1.windows.2
+

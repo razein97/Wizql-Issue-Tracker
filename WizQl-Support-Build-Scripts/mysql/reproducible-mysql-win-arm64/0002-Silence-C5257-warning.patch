@@ -1,0 +1,30 @@
+From 852c13d0039abbe421330359ab5d6336461acffe Mon Sep 17 00:00:00 2001
+From: Anthony Roberts <anthony.roberts@linaro.org>
+Date: Mon, 13 Jun 2022 14:50:30 +0100
+Subject: [PATCH 2/5] Silence C5257 warning
+
+The full fix for this issue will require something of a refactor, which
+is out of scope for this initial ARM64 porting effort, only appears when
+using VS2022 17.2 or higher
+---
+ cmake/os/Windows.cmake | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/cmake/os/Windows.cmake b/cmake/os/Windows.cmake
+index b31513b8b45..b76e6db7f74 100644
+--- a/cmake/os/Windows.cmake
++++ b/cmake/os/Windows.cmake
+@@ -228,6 +228,10 @@ IF(MSVC)
+   STRING_APPEND(CMAKE_C_FLAGS " /wd4244")
+   STRING_APPEND(CMAKE_CXX_FLAGS " /wd4244")
+ 
++  # 'Enumeration was previously declared without a fixed underlying type.'
++  STRING_APPEND(CMAKE_C_FLAGS " /wd5257")
++  STRING_APPEND(CMAKE_CXX_FLAGS " /wd5257")
++
+   # Enable stricter standards conformance when using Visual Studio
+   STRING_APPEND(CMAKE_CXX_FLAGS " /permissive-")
+ ENDIF()
+-- 
+2.35.1.windows.2
+
