@@ -47,3 +47,14 @@ Please open a new issue after going through the existing issues first.
 - [x] 15 languages are supported out of the box.
 - [x] Traverse foreign keys.
 - [x] Generate QR codes using your data.
+
+## Install
+
+[Download from WizQl official website]("https://wizql.com/download")
+
+### MacOS
+```bash
+brew tap razein97/wizql
+brew install --cask wizql
+```
+
