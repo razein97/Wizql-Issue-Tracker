@@ -50,7 +50,7 @@ Please open a new issue after going through the existing issues first.
 
 ## Install
 
-[Download from WizQl official website]("https://wizql.com/download")
+[Download from the official website](https://wizql.com/download "A database client for developers")
 
 ### MacOS
 ```bash
