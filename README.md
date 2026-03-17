@@ -1,4 +1,4 @@
-![Main](https://github.com/razein97/Wizql-Issue-Tracker/blob/main/github_social.png)
+![Main](github_social.png)
 
 # WizQl
 
@@ -8,10 +8,25 @@ All issues present and past are tracked here.
 
 Please open a new issue after going through the existing issues first.
 
-|                                                                                                            |                                                                                                            |                                                                                                            |
-| :--------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------: |
-| <img width="1604" alt="1" src="https://github.com/razein97/Wizql-Issue-Tracker/blob/main/showcase/1.webp"> | <img width="1604" alt="2" src="https://github.com/razein97/Wizql-Issue-Tracker/blob/main/showcase/2.webp"> | <img width="1604" alt="3" src="https://github.com/razein97/Wizql-Issue-Tracker/blob/main/showcase/3.webp"> |
-| <img width="1604" alt="4" src="https://github.com/razein97/Wizql-Issue-Tracker/blob/main/showcase/4.webp"> | <img width="1604" alt="5" src="https://github.com/razein97/Wizql-Issue-Tracker/blob/main/showcase/5.webp"> | <img width="1604" alt="6" src="https://github.com/razein97/Wizql-Issue-Tracker/blob/main/showcase/6.webp"> |
+## Supported Databases
+
+<div style="display: flex; gap: 10px;">
+  <img title="PostgreSQL" src="images/logos/postgresql.png" width="40" height="40" />
+ <img title="MySQL" src="images/logos/mysql.png" width="60" height="40" />
+ <img title="SQLite" src="images/logos/sqlite.png" width="40" height="40" />
+ <img title="SQLCipher" src="images/logos/sqlcipher.webp" width="40" height="40" />
+ <img title="MongoDB" src="images/logos/mongodb.png" width="40" height="40" />
+ <img title="DuckDB" src="images/logos/duckdb.png" width="40" height="40" />
+ <img title="LibSQL" src="images/logos/libsql.webp" width="40" height="40" />
+ <img title="IBM DB2" src="images/logos/db2.webp" width="40" height="40" />
+</div>
+
+## Showcase
+
+|                                                  |                                                  |                                                  |
+| :----------------------------------------------: | :----------------------------------------------: | :----------------------------------------------: |
+| <img width="1604" alt="1" src="showcase/1.webp"> | <img width="1604" alt="2" src="showcase/2.webp"> | <img width="1604" alt="3" src="showcase/3.webp"> |
+| <img width="1604" alt="4" src="showcase/4.webp"> | <img width="1604" alt="5" src="showcase/5.webp"> | <img width="1604" alt="6" src="showcase/6.webp"> |
 
 ## Features
 
