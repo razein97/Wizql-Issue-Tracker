@@ -18,7 +18,7 @@ Please open a new issue after going through the existing issues first.
  <img title="MongoDB" src="images/logos/mongodb.png" width="40" height="40" />
  <img title="DuckDB" src="images/logos/duckdb.png" width="40" height="40" />
  <img title="LibSQL" src="images/logos/libsql.webp" width="40" height="40" />
- <img title="IBM DB2" src="images/logos/db2.webp" width="40" height="40" />
+ <img title="IBM DB2 LUW" src="images/logos/db2_luw.webp" width="40" height="40" />
 </div>
 
 ## Showcase
@@ -47,14 +47,16 @@ Please open a new issue after going through the existing issues first.
 - [x] 15 languages are supported out of the box.
 - [x] Traverse foreign keys.
 - [x] Generate QR codes using your data.
+- [x] Generate Mock Data.
+- [x] Params substitution for queries.
 
 ## Install
 
-[Download from the official website](https://wizql.com/download "A database client for developers")
+[Download from the official website](https://wizql.com/download 'A database client for developers')
 
 ### MacOS
+
 ```bash
 brew tap razein97/wizql
 brew install --cask wizql
 ```
-
